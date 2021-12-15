@@ -1,5 +1,7 @@
 import React, {useRef, useState} from "react";
-import { StyleSheet, View, Text, ScrollView, TextInput, TouchableOpacity, Image, Button } from "react-native";
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Button, Alert } from "react-native";
+
+import FormInput from "../component/FormInput";
 
 import { RadioButton, Checkbox } from 'react-native-paper';
 import {Picker} from '@react-native-picker/picker';
@@ -10,15 +12,35 @@ import Spinner from 'react-native-loading-spinner-overlay';
 
 const TEXT_SIZE = 16
 
-export default function FormScreen(){
+const updateError = (error, stateUpdater) => {
+    stateUpdater(error)
+    setTimeout(() => {
+        stateUpdater('')
+    }, 3000)
+
+}
+
+const isValidEmail = (value) => {
+    const regex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+    return regex.test(value)
+}
+
+export default function FormScreen({navigation}){
 
     const [image, setImage] = useState('https://reactjs.org/logo-og.png')
 
-    const [firstName, setFirstName] = useState('')
-    const [lastName, setLastName] = useState('')
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] = useState('')
+    const [userInfo, setuserInfo] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+    })
+
+
+    const {firstName, lastName, email, password, confirmPassword} = userInfo
+
+    const [error, setError] = useState('')
 
     const [gender, setGender] = useState('');
 
@@ -38,6 +60,10 @@ export default function FormScreen(){
     const { isOpen, onOpen, onClose } = useDisclose();
 
     const [isLoading, setIsLoading] = useState(false);
+
+    const handleOnChangeText = (value, fieldName) => {
+        setuserInfo({...userInfo, [fieldName]: value})
+    }
 
     const onCheckBoxClick = (language, checked) => {
         if(!checked){
@@ -79,51 +105,39 @@ export default function FormScreen(){
         
     }
 
-    const emailValidation = (email) => {
-        const regex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
-        if(!email || regex.test(email) === false){
-            return false
-        }
+    const isValidForm = () => {
+
+        if(!firstName.trim() || firstName.length < 3) return updateError('First Name must be 3 or more chars', setError)
+
+        if(!lastName.trim() || lastName.length < 3) return updateError('Last Name must be 3 or more chars', setError)
+
+        if(!isValidEmail(email)) return updateError('Invalid Email', setError)
+
+        if(!password.trim() || password.length < 4) return updateError('Password must be more than 4 chars', setError)
+
+        if(password !== confirmPassword) return updateError('Password and confirm password must be same', setError)
+
+        if(gender == '') return updateError('Please select gender', setError)
+
+        if(time == 'Click here to select time') return updateError('Please select time', setError)
+
         return true
     }
 
-    const passwordValidation = (password, confirmPassword) => {
-        if (password.length == 0 || confirmPassword.length == 0) {
-            alert('Password and Confirm password is required')
-            return false
-        } else if (password.length < 8 ||  password.length > 20) {
-            alert('Password should be min 8 char and max 20 char')
-            return false
-        } else if (password !==  confirmPassword) {
-            alert('Passwoad and confirm password should be same')
-            return false
+    const submitForm = () => {
+        if (isValidForm()){
+            setIsLoading(true);
+            setTimeout(() => {
+                setIsLoading(false);
+                Alert.alert(
+                    "Form",
+                    "Successfully Submitted",
+                    [
+                      { text: "OK", onPress: () => navigation.goBack() }
+                    ]
+                );
+            }, 5000);
         }
-    }
-
-    const onSubmit = () => {
-        if(firstName == ''){
-            alert('Please fill first name')
-            return
-        } else if(lastName == ''){
-            alert('Please fill last name')
-            return
-        } else if(emailValidation(email) == false){
-            alert('Please Enter valid email')
-            return
-        } else if(passwordValidation(password, confirmPassword) == false){
-            return
-        } else if(gender == ''){
-            alert('Please select gender')
-            return
-        } else if(time == 'Click here to select time'){
-            alert('Please select time')
-            return
-        }
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-            alert('Successfully Submitted')
-        }, 5000);        
     }
 
     return(
@@ -137,23 +151,16 @@ export default function FormScreen(){
 
                 <View style = {styles.imagePickerView}>  
                     <TouchableOpacity onPress = {onOpen}>
-                        <Image
-                            source = {{uri : image}}
-                            style = {{ width: 80, height: 80}}
-                        />
+                        <Image source = {{uri : image}} style = {{ width: 80, height: 80}}/>
                     </TouchableOpacity>
                     
                     <Actionsheet isOpen = {isOpen} onClose = {onClose}>
-
                         <Actionsheet.Content>
-                        <Box>
-                            <Text>Select a photo</Text>
-                        </Box>
+                        <Box><Text>Select a photo</Text></Box>
                             <Actionsheet.Item onPress = {takePhotoFromCamera}>Take Photo</Actionsheet.Item>
                             <Actionsheet.Item onPress = {choosePhotoFromGallery}>Choose from gallery</Actionsheet.Item>
                             <Actionsheet.Item onPress = {onClose}>Cancel</Actionsheet.Item>
                         </Actionsheet.Content>
-
                     </Actionsheet>
                             
                     <Text style = {styles.textTitle}>Profile</Text>   
@@ -161,38 +168,46 @@ export default function FormScreen(){
                 </View>
 
                 <View style = {styles.textInputView}>
-                    <View style = {styles.nameView}>
-                        <TextInput
-                            style = {{...styles.textInput, ...styles.firstNameTextInput}}
-                            onChangeText = {value => setFirstName(value)}
-                            placeholder = 'Enter First Name'
-                        />
 
-                        <TextInput
-                            style = {{...styles.textInput, ...styles.lastNameTextInput}}
-                            onChangeText = {value => setLastName(value)}
-                            placeholder = 'Enter Last Name'
-                        />
+                    <View style = {styles.nameView}>
+                        <View style = {{flex: 1, marginRight: 10}}>
+                            <FormInput
+                                label = {'First Name'}
+                                onChangeText = {value => handleOnChangeText(value, 'firstName')}
+                                placeholder = 'Enter First Name'
+                                
+                            />
+                        </View>
+                        <View style = {{flex: 1, marginLeft: 10}}>
+                            <FormInput
+                                label = {'Last Name'}
+                                onChangeText = {value => handleOnChangeText(value, 'lastName')}
+                                placeholder = 'Enter Last Name'
+                            />
+                        </View>
                     </View>
                     
-                    <TextInput
-                        style = {styles.textInput}
-                        onChangeText = {value => setEmail(value)}
-                        placeholder = 'Enter Email'
+                    <FormInput
+                        label = {'Email ID'}
+                        onChangeText = {value => handleOnChangeText(value, 'email')}
+                        placeholder = 'example123@gmai;.com'
+                        autoCapitalize = 'none'
                     />
 
-                    <TextInput
-                        style = {styles.textInput}
-                        onChangeText = {value => setPassword(value)}
+                    <FormInput
+                        label = {'Password'}
+                        onChangeText = {value => handleOnChangeText(value, 'password')}
                         placeholder = 'Enter Password'
                         secureTextEntry = {true}
+                        autoCapitalize = 'none'
                     />
 
-                    <TextInput
-                        style = {styles.textInput}
-                        onChangeText = {value => setConfirmPassword(value)}
+                    <FormInput
+                        label = {'Confirm Password'}
+                        onChangeText = {value => handleOnChangeText(value, 'confirmPassword')}
                         placeholder = 'Confirm password'
                         secureTextEntry = {true}
+                        autoCapitalize = 'none'
                     />
                 </View>
 
@@ -200,16 +215,11 @@ export default function FormScreen(){
 
                     <Text style = {styles.textTitle}>Select Gender : </Text>
 
-                    <RadioButton.Group 
-                        value={gender}
-                        onValueChange = {gender => setGender(gender)} 
-                    >
+                    <RadioButton.Group value={gender} onValueChange = {gender => setGender(gender)}>
                         <View style = {{ flexDirection: "row", marginHorizontal: 16}}>
                             <RadioButton.Item label = "Male" value="Male" />
-                            
                             <RadioButton.Item label = "Female" value="Female" />
                         </View>
-
                     </RadioButton.Group>
 
                 </View>
@@ -252,10 +262,10 @@ export default function FormScreen(){
                             onCheckBoxClick('Kotlin', kotlinChecked)
                         }}
                     />
-
                 </View>
 
                 <View style = {styles.dropDownView}>
+
                     <Text style = {styles.textTitle}>Select Cast : </Text>
                     <View style = {styles.pickerView}>
                         <Picker
@@ -271,10 +281,11 @@ export default function FormScreen(){
                             <Picker.Item label = 'PWD' value = 'PWD'/>
                         </Picker>
                     </View>
-                    
+        
                 </View>
 
                 <View style = {styles.timePickerView}>
+                    
                     <Text style = {styles.textTitle}>Select Time : </Text>
 
                     <TouchableOpacity onPress = {() => setShow(true)}>
@@ -293,13 +304,15 @@ export default function FormScreen(){
                         
                 </View>
 
+                {error ? <Text style = {styles.errorStyle}>{error}</Text>: null}
+
                 <View style = {styles.buttonView}>
                     <Button
                         title = 'Submit'
-                        onPress = {onSubmit}
+                        onPress = {submitForm}
                     />
                 </View>
-
+                
                 {/*<Text>Email : {email}</Text>
                 <Text>Password: {password}</Text>
                 <Text>First Name : {firstName}</Text>
@@ -322,6 +335,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#009387',
         height: 200,
         flexDirection: "row",
+    },
+
+    errorStyle: {
+        color: 'red',
+        fontSize: 16,
+        fontWeight: 'bold',
+        alignSelf: "center"
     },
 
     topText: {
@@ -398,13 +418,15 @@ const styles = StyleSheet.create({
     pickerView: {
         width: 150,
         borderRadius: 10,
-        backgroundColor: '#959596',
-        marginLeft: 20
+        backgroundColor: '#b0b0b0',
+        marginLeft: 20,
+        borderWidth: 2,
+        borderColor: 'grey'
     },
 
     imagePickerView: {
         marginHorizontal: 30,
-        marginVertical: 10,
+        marginVertical: 20,
         marginTop: 30,
         alignItems: "center",
         
