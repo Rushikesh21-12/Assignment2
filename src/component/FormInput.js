@@ -10,6 +10,7 @@ export default function FormInput(props){
         <View style = {styles.container}>
             <Text style = {styles.labelStyle}>{props.label}</Text>
             <TextInput {...props} style = {styles.input} />
+            {props.errorName ? <Text style = {styles.errorStyle}>{props.errorName}</Text> : null}
         </View>
     </View>
   );
@@ -33,6 +34,11 @@ const styles = StyleSheet.create({
     labelStyle: {
         fontWeight: 'bold', 
         marginLeft: 3
+    },
+
+    errorStyle: {
+        fontWeight: 'bold',
+        color: 'red',
     }
 
 });
