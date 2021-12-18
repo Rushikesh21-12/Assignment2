@@ -1,35 +1,36 @@
-import React from "react";
-import { FlatList, View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React from 'react';
+import { FlatList, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-import data from "../../asstes/ListData/data";
+import data from '../../asstes/ListData/data';
 import Icon from 'react-native-vector-icons/SimpleLineIcons';
 
 const ICON_SIZE = 30
 const ICON_COLOR = 'yellow'
 
-const DisplayIcon = (props) => {
-    return <Icon name = {props.icon} color = {ICON_COLOR} size = {ICON_SIZE}/>
+const OneItem = ({item, navigation}) => {
+    return(
+        <TouchableOpacity onPress = {() => navigation.navigate('Form')}>
+            <View style = {styles.itemList}>
+                <Text style = {styles.text}>{item.name}</Text>
+                <Icon name = {item.icon} color = {ICON_COLOR} size = {ICON_SIZE}/>
+            </View>
+        </TouchableOpacity>
+    )
 }
 
 export default function ListScreen({navigation}){
 
     return(
         <View style = {styles.container}>
-            <Text style = {{color: 'white', marginVertical: 20, fontSize: 16}}>FlatList</Text>
+
+            <Text style = {styles.title}>FlatList</Text>
+
             <FlatList
                 keyExtractor = {(item) => `${item.name}-${item.icon}`}
                 data = {data}
-                renderItem = {({item}) => {
-                    return(
-                        <TouchableOpacity onPress = {() => navigation.navigate('Form')}>
-                            <View style = {styles.itemList}>
-                                <Text style = {styles.text}>{item.name}</Text>
-                                <DisplayIcon icon = {item.icon}/>
-                            </View>
-                        </TouchableOpacity>
-                    )
-                }}
+                renderItem = {({item}) => {return <OneItem item = {item} navigation = {navigation}/>}}
             />
+
         </View>
     )
 }
@@ -40,13 +41,19 @@ const styles = StyleSheet.create({
         flex: 1
     },
 
+    title: {
+        color: 'white', 
+        marginVertical: 20, 
+        fontSize: 16
+    },
+
     itemList: {
         flex: 1,
-        flexDirection: "row",
+        flexDirection: 'row',
         borderTopWidth: 2,
         borderColor: 'yellow',
         padding: 15,
-        justifyContent: "space-between"
+        justifyContent: 'space-between'
     },
 
     text: {

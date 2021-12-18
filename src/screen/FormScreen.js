@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Button, Alert } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Button, Modal, TextInput, Pressable } from 'react-native';
 
 import FormInput from '../component/FormInput';
 
@@ -9,6 +9,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Actionsheet, NativeBaseProvider, useDisclose, Box } from 'native-base';
 import ImagePicker from 'react-native-image-crop-picker';
 import Spinner from 'react-native-loading-spinner-overlay';
+import { CallingCodePicker } from '@digieggs/rn-country-code-picker';
 
 const TEXT_SIZE = 16
 
@@ -17,9 +18,23 @@ const isValidEmail = (value) => {
     return regex.test(value)
 }
 
+const isValidMobile = (value) => {
+    const regexMobile = /^[7-9]{1}[0-9]{9}$/
+    return regexMobile.test(value)
+}
+
+const isValidPassword = (value) => {
+    if(value.match(/[a-z]/g) && value.match(/[A-Z]/g) && value.match(/[0-9]/g) 
+        && value.match(/[^a-zA-Z\d]/g) && value.length >= 8){
+            return true
+    }
+    else return false
+}
+
 export default function FormScreen({navigation}){
 
-    const [image, setImage] = useState('https://reactjs.org/logo-og.png')
+    const [image, setImage] = useState('https://i.postimg.cc/TYNx4qkz/default-profile.png')
+    const { isOpen, onOpen, onClose } = useDisclose();
 
     const [userInfo, setuserInfo] = useState({
         firstName: undefined,
@@ -27,13 +42,19 @@ export default function FormScreen({navigation}){
         email: undefined,
         password: undefined,
         confirmPassword: undefined,
+        mobile: undefined,
         gender: undefined
     })
 
-    const {firstName, lastName, email, password, confirmPassword, gender} = userInfo
-    // const [gender, setGender] = useState('');
+    const {firstName, lastName, email, password, confirmPassword, mobile, gender} = userInfo
+    const [countryCode, setCountryCode] = useState(undefined)
+
     const [cast, setCast] = useState('General')
+
     const [time, setTime] = useState('Click here to select time')
+    const [date, setDate] = useState(new Date())
+    const [show, setShow] = useState(false)
+
     const [javaChecked, setJavaChecked] = useState(false);
     const [pythonChecked, setPythonChecked] = useState(false);
     const [jsChecked, setJsChecked] = useState(false);
@@ -45,86 +66,93 @@ export default function FormScreen({navigation}){
     const [emailError, setEmailError] = useState(undefined)
     const [passwordError, setPasswordError] = useState(undefined)
     const [confirmPasswordError, setConfirmPasswordError] = useState(undefined)
+    const [mobileError, setMobileError] = useState(undefined)
     const [genderError, setGenderError] = useState(undefined)
     const [timeError, setTimeError] = useState(undefined)
-    const [valid, setValid] = useState(false)
-    
-    const [date, setDate] = useState(new Date())
-    const [show, setShow] = useState(false)
-    
-    const { isOpen, onOpen, onClose } = useDisclose();
 
     const [isLoading, setIsLoading] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
 
-    const onChangeTextInput = (value, fieldName, setError) => {
+    const onUserDataChange = (value, fieldName, setError) => {
         setuserInfo({...userInfo, [fieldName]: value})
         switch(fieldName){
             case 'firstName':
-                if(value == ''){setError('Required Feild')} else{setError('')}
+                if(value == '') 
+                    setError('Required Feild !')
+                else 
+                    setError('')
                 break
 
             case 'lastName':
-                if(value == ''){setError('Required Field')} else{setError('')}
+                if(value == '') 
+                    setError('Required Field !') 
+                else 
+                    setError('')
                 break
 
             case 'email':
-                if(value == '') {
-                    setError('Required field')
-                }else { 
-                    if (!isValidEmail(value)){
-                        setError('Invalid email')
-                    }else {
-                            setError('')
-                    }
+                if(value == '') 
+                    setError('Required field !')
+                else {
+                    if(!isValidEmail(value)) 
+                        setError('Invalid email !')
+                    else 
+                        setError('')  
                 }
                 break
 
             case 'password':
-                if(value == ''){
-                    setError('Required Field')
-                } else{
-                    if(value.length < 4){
-                        setError('Password must be more than 4 chars')
-                    } else{
-                        setError('')
-                    }
+                if(value == '') 
+                    setError('Required Field !')
+                else{
+                    if(isValidPassword(value)) 
+                        setError('') 
+                    else 
+                        setError('Password does not match with criteria !') 
                 }
                 break
             
             case 'confirmPassword':
-                if(value == ''){
-                    setError('Required Field')
-                } else{
-                    if(value !== password){
-                        setError('Must be same as Password')
-                    } else{
+                if(value == '') 
+                    setError('Required Field !')
+                else{
+                    if(value !== password) 
+                        setError('Must be same as Password !')
+                    else 
                         setError('')
-                    }
+                }
+                break
+
+            case 'mobile':
+                if(value == '') 
+                    setError('Required Field !')
+                 else{
+                    if(!isValidMobile(value)) 
+                        setError('Invalid Mobile No.')
+                    else 
+                        setError('') 
                 }
                 break
 
             case 'gender':
-                if(value == ''){
-                    setError('Please Selece gender!')
-                }else {
+                if(value == '') 
+                    setError('Please Selece gender !')
+                else 
                     setError('')
-                }
                 break
 
             default:
                 setError('')
-                break
-            
-        }
-        
+                break 
+        } 
     }
 
-    const onCheckBoxClick = (language, checked) => {
-        if(!checked){
+    const onCheckBoxClick = (language, checked, setLanguageChecked) => {
+        setLanguageChecked(!checked)
+        if(!checked) 
             setSelectedLanguages(prevArray => [...prevArray, language])
-        }else{
+        else
             setSelectedLanguages((prevArray) => {return prevArray.filter(currentLanguage => currentLanguage !== language)})
-        }
     }
 
     const onChangeTime = (event, selectedDate) => {
@@ -134,18 +162,17 @@ export default function FormScreen({navigation}){
     
             setTime(currentDate.getHours() + ':' + currentDate.getMinutes() + ':' + currentDate.getSeconds())
 
-            if (time == 'Click here to select time'){
+            if (time == 'Click here to select time')
                 setTimeError('Please select time !')
-            }else{
-                setTimeError('')
-            }           
+            else
+                setTimeError('')         
     };
 
     const takePhotoFromCamera = () => {
         {onClose()}
         ImagePicker.openCamera({
             width: 300,
-            height: 400,
+            height: 300,
             cropping: true,
         }).then(image => {
             setImage(image.path)
@@ -157,7 +184,7 @@ export default function FormScreen({navigation}){
         {onClose()}
         ImagePicker.openPicker({
             width: 300,
-            height: 400,
+            height: 300,
             cropping: true
         }).then(image => {
             setImage(image.path)
@@ -167,33 +194,14 @@ export default function FormScreen({navigation}){
 
     const isValidForm = () => {
         
-        if(firstName == undefined){
-            setFirstNameError('Required Field')
-        }  
-
-        if(lastName == undefined){
-            setLastNameError('Required Field')
-        }  
-
-        if(email == undefined){
-            setEmailError('Required Field')
-        }  
-
-        if(password == undefined){
-            setPasswordError('Required Field')
-        }  
-
-        if(confirmPassword == undefined){
-            setConfirmPasswordError('Required Field')
-        }  
-
-        if(gender == undefined){
-            setGenderError('Please select gender')
-        } 
-        
-        if(time == 'Click here to select time'){
-            setTimeError('Please select time !')
-        }
+        firstName == undefined ? setFirstNameError('Required Field !') : null
+        lastName == undefined ? setLastNameError('Required Field !') : null
+        email == undefined ? setEmailError('Required Field !') : null
+        password == undefined ? setPasswordError('Required Field !') : null
+        confirmPassword == undefined ? setConfirmPasswordError('Required Field !') : null
+        mobile == undefined ? setMobileError('Required Field !') : null
+        gender == undefined ? setGenderError('Please select gender !') : null
+        time == 'Click here to select time' ? setTimeError('Please select time !') : null
         
         return
     }
@@ -205,227 +213,273 @@ export default function FormScreen({navigation}){
             setIsLoading(true);
             setTimeout(() => {
                 setIsLoading(false);
-                Alert.alert(
-                    'Form',
-                    'Successfully Submitted',
-                    [
-                        { text: 'OK', onPress: () => navigation.goBack() }
-                    ]
-                );
+                setModalVisible(true)
             }, 5000);
         }
     }
 
+    const onModalButtonPress = () => {
+        setModalVisible(!modalVisible)
+        navigation.goBack()
+    }
+
     return(
-        <ScrollView style = {{flex: 1}}>
+        <ScrollView style = {styles.scrollContainer}>
             <Spinner visible = {isLoading} textContent = {'Loading...'}/>
+            <Modal
+                animationType = "slide"
+                transparent = {true}
+                visible = {modalVisible}
+            >
+                <View style = {styles.modalContainer}>
+                    <View style = {styles.modalView}>
+                        
+                        <View style = {styles.modalTextView}>
+                            <Text style = {styles.modalText}>Successfully Submitted!</Text>
+                        </View>
+
+                        <TouchableOpacity
+                            style = {styles.modalButton}
+                            onPress = {() => onModalButtonPress()}
+                        >
+                        <Text style = {styles.textStyle}>OK</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
 
             <View style = {styles.topView}>
                 <Text style = {styles.topText}>Welcome!</Text>
             </View>
             
             <NativeBaseProvider>
-            <View style = {styles.container}>
-                
-                <View style = {styles.imagePickerView}>  
-                    <TouchableOpacity onPress = {onOpen}>
-                        <Image source = {{uri : image}} style = {{ width: 80, height: 80}}/>
-                    </TouchableOpacity>
+                <View style = {styles.container}>
                     
-                    <Actionsheet isOpen = {isOpen} onClose = {onClose}>
-                        <Actionsheet.Content>
-                        <Box><Text>Select a photo</Text></Box>
-                            <Actionsheet.Item onPress = {takePhotoFromCamera}>Take Photo</Actionsheet.Item>
-                            <Actionsheet.Item onPress = {choosePhotoFromGallery}>Choose from gallery</Actionsheet.Item>
-                            <Actionsheet.Item onPress = {onClose}>Cancel</Actionsheet.Item>
-                        </Actionsheet.Content>
-                    </Actionsheet>
-                            
-                    <Text style = {styles.textTitle}>Profile</Text>   
-                    
-                </View>
-
-                <View style = {styles.nameView}>
-                    <View style = {{flex: 1, marginRight: 10}}>
-                        <FormInput
-                            label = {'First Name'}
-                            onChangeText = {value => onChangeTextInput(value, 'firstName', setFirstNameError)}
-                            placeholder = 'Enter First Name'
-                            errorName = {firstNameError}
-                        />
-                    </View>
-                    <View style = {{flex: 1, marginLeft: 10}}>
-                        <FormInput
-                            label = {'Last Name'}
-                            onChangeText = {value => onChangeTextInput(value, 'lastName', setLastNameError)}
-                            placeholder = 'Enter Last Name'
-                            errorName = {lastNameError}
-                        />
-                    </View>
-                </View>
-                
-                <FormInput
-                    label = {'Email ID'}
-                    onChangeText = {value => onChangeTextInput(value, 'email', setEmailError)}
-                    placeholder = 'example123@gmai;.com'
-                    autoCapitalize = 'none'
-                    errorName = {emailError}
-                />
-
-                <FormInput
-                    label = {'Password'}
-                    onChangeText = {value => onChangeTextInput(value, 'password', setPasswordError)}
-                    placeholder = 'Enter Password'
-                    secureTextEntry = {true}
-                    autoCapitalize = 'none'
-                    errorName = {passwordError}
-                />
-
-                <FormInput
-                    label = {'Confirm Password'}
-                    onChangeText = {value => onChangeTextInput(value, 'confirmPassword', setConfirmPasswordError)}
-                    placeholder = 'Confirm password'
-                    secureTextEntry = {true}
-                    autoCapitalize = 'none'
-                    errorName = {confirmPasswordError}
-                />
-               
-                <View style = {styles.genderViewContainer}>
-                    <View style = {styles.genderView}>
-
-                        <Text style = {styles.textTitle}>Select Gender : </Text>
-
-                        <RadioButton.Group value = {gender} onValueChange = {gender => onChangeTextInput(gender, 'gender', setGenderError)}>
-                            <View style = {{ flexDirection: 'row', marginHorizontal: 16}}>
-                                <RadioButton.Item label = 'Male' value = 'Male' />
-                                <RadioButton.Item label = 'Female' value = 'Female' />
-                            </View>
-                        </RadioButton.Group>
-
-                    </View>
-
-                    {genderError ? <Text style = {styles.errorStyle}>{genderError}</Text> : null}
-                </View>
-                
-                <Text style = {styles.textTitle}>Select preffered language : </Text>
-
-                <Checkbox.Item
-                    label = 'JAVA'
-                    status = {javaChecked ? 'checked' : 'unchecked'}
-                    onPress = {() => {
-                        setJavaChecked(!javaChecked)
-                        onCheckBoxClick('JAVA', javaChecked)                       
-                    }}
-                />
-
-                <Checkbox.Item
-                    label = 'Python'
-                    status = {pythonChecked ? 'checked' : 'unchecked'}
-                    onPress = {() => {
-                        setPythonChecked(!pythonChecked)
-                        onCheckBoxClick('Python', pythonChecked)
-                    }}
-                />
-
-                <Checkbox.Item
-                    label = 'Java Script'
-                    status = {jsChecked ? 'checked' : 'unchecked'}
-                    onPress = {() => {
-                        setJsChecked(!jsChecked)
-                        onCheckBoxClick('JavaScript', jsChecked)
-                    }}
-                />
-
-                <Checkbox.Item
-                    label = 'Kotlin'
-                    status = {kotlinChecked ? 'checked' : 'unchecked'}
-                    onPress = {() => {
-                        setKotlinChecked(!kotlinChecked)
-                        onCheckBoxClick('Kotlin', kotlinChecked)
-                    }}
-                />
-                
-                <View style = {styles.dropDownView}>
-
-                    <Text style = {styles.textTitle}>Select Cast : </Text>
-                    <View style = {styles.pickerView}>
-                        <Picker
-                            selectedValue={cast}
-                            onValueChange={(itemValue, itemIndex) => setCast(itemValue)}
-                            style = {styles.picker}
-                            prompt = 'Options'
-                        >
-                            <Picker.Item label = 'General' value = 'General'/>
-                            <Picker.Item label = 'SEBC' value = 'SEBC'/>
-                            <Picker.Item label = 'SC' value = 'SC'/>
-                            <Picker.Item label = 'ST' value = 'ST'/>
-                            <Picker.Item label = 'PWD' value = 'PWD'/>
-                        </Picker>
-                    </View>
-        
-                </View>
-
-                <View style = {styles.timePickerViewContainer}>
-                    <View style = {styles.timePickerView}>
-                    
-                        <Text style = {styles.textTitle}>Select Time : </Text>
-
-                        <TouchableOpacity onPress = {() => setShow(true)}>
-                            <Text style = {{color: 'blue', fontWeight: undefined, fontSize: 16}}>{time}</Text>
-                            {show && (
-                                <DateTimePicker
-                                testID = 'dateTimePicker'
-                                value = {date}
-                                mode = {'time'}
-                                is24Hour = {true}
-                                display = 'default'
-                                onChange = {onChangeTime}
-                                />
-                            )}
+                    <View style = {styles.imagePickerView}>  
+                        <TouchableOpacity onPress = {onOpen}>
+                            <Image source = {{uri : image}} style = {styles.profile}/>
                         </TouchableOpacity>
+                        
+                        <Actionsheet isOpen = {isOpen} onClose = {onClose}>
+                            <Actionsheet.Content>
+                            <Box><Text>Select a photo</Text></Box>
+                                <Actionsheet.Item onPress = {takePhotoFromCamera}>Take Photo</Actionsheet.Item>
+                                <Actionsheet.Item onPress = {choosePhotoFromGallery}>Choose from gallery</Actionsheet.Item>
+                                <Actionsheet.Item onPress = {onClose}>Cancel</Actionsheet.Item>
+                            </Actionsheet.Content>
+                        </Actionsheet>
+                                
+                        <Text style = {styles.textTitle}>Profile</Text>   
+                        
                     </View>
-                    {timeError ? <Text style = {styles.errorStyle}>{timeError}</Text> : null}
-                </View>
 
-                <View style = {styles.buttonView}>
-                    <Button
-                        title = 'Submit'
-                        onPress = {submitForm}
-                        />
-                </View>
+                    <View style = {styles.nameView}>
+                        <View style = {styles.firstNameTextInput}>
+                            <FormInput
+                                label = {'First Name'}
+                                onChangeText = {value => onUserDataChange(value, 'firstName', setFirstNameError)}
+                                placeholder = 'Enter First Name'
+                                errorName = {firstNameError}
+                            />
+                        </View>
+                        <View style = {styles.lastNameTextInput}>
+                            <FormInput
+                                label = {'Last Name'}
+                                onChangeText = {value => onUserDataChange(value, 'lastName', setLastNameError)}
+                                placeholder = 'Enter Last Name'
+                                errorName = {lastNameError}
+                            />
+                        </View>
+                    </View>
+                    
+                    <FormInput
+                        label = {'Email ID'}
+                        onChangeText = {value => onUserDataChange(value, 'email', setEmailError)}
+                        placeholder = 'example123@gmai.com'
+                        keyboardType = 'email-address'
+                        autoCapitalize = 'none'
+                        errorName = {emailError}
+                    />
+
+                    <View style = {styles.mvStyle}>
+                        <Text style = {styles.textTitle}>Mobile No.</Text>
+                        <View style = {styles.mobileView}>
+
+                            <CallingCodePicker 
+                                initialCountryCode = 'IN'
+                                onValueChange = {text => setCountryCode(text)} 
+                                style = {styles.countryCodePicker} 
+                            />
+
+                            <View style = {styles.mobileInput}>
+                                <TextInput
+                                    onChangeText = {value => onUserDataChange(value, 'mobile', setMobileError)}
+                                    placeholder = 'Ex : 987654321'
+                                    keyboardType = 'numeric'
+                                    maxLength = {10}
+                                />
+                            </View>
+                            
+                        </View>
+                        {mobileError ? <Text style = {styles.errorStyle}>{mobileError}</Text> : null}
+                    </View>
+                    
+
+                    <FormInput
+                        label = {'Password'}
+                        onChangeText = {value => onUserDataChange(value, 'password', setPasswordError)}
+                        placeholder = 'Enter Password'
+                        secureTextEntry = {true}
+                        autoCapitalize = 'none'
+                        errorName = {passwordError}
+                    />
+                    <Text style = {styles.passwordNote}>Note : Password must contain al teast 1 Uppercase, Lowercase, Number, Special Char. and more than 8 chars</Text>
+                    
+                    <FormInput
+                        label = {'Confirm Password'}
+                        onChangeText = {value => onUserDataChange(value, 'confirmPassword', setConfirmPasswordError)}
+                        placeholder = 'Confirm password'
+                        secureTextEntry = {true}
+                        autoCapitalize = 'none'
+                        errorName = {confirmPasswordError}
+                    />
                 
-                {/*
-                <Text>FE : {firstNameError}, LE: {lastNameError}, EE : {emailError}, PE: {passwordError}, CPE : {confirmPasswordError}, GE: {genderError}, TE : {timeError}</Text>
-                <Text>Email : {email}</Text>
-                <Text>Password: {password}</Text>
-                <Text>First Name : {firstName}</Text>
-                <Text>Last Name : {lastName}</Text>
-                <Text>Gemder : {gender}</Text>
-                <Text>Preffered language : {selectedLanguages.join(', ')}</Text>
-                <Text>Cast : {cast}</Text>*/}
-            </View>
+                    <View style = {styles.mvStyle}>
+                        <View style = {styles.genderView}>
+
+                            <Text style = {styles.textTitle}>Select Gender : </Text>
+
+                            <RadioButton.Group 
+                                value = {gender} 
+                                onValueChange = {gender => onUserDataChange(gender, 'gender', setGenderError)}
+                            >
+                                <View style = {styles.radioButtons}>
+                                    <RadioButton.Item label = 'Male' value = 'Male' />
+                                    <RadioButton.Item label = 'Female' value = 'Female' />
+                                </View>
+                            </RadioButton.Group>
+
+                        </View>
+
+                        {genderError ? <Text style = {styles.errorStyle}>{genderError}</Text> : null}
+                    </View>
+                    
+                    <Text style = {[styles.textTitle, styles.mvStyle]}>Select preffered language : </Text>
+
+                    <Checkbox.Item
+                        label = 'JAVA'
+                        status = {javaChecked ? 'checked' : 'unchecked'}
+                        onPress = {() => { onCheckBoxClick('JAVA', javaChecked, setJavaChecked) }}
+                    />
+
+                    <Checkbox.Item
+                        label = 'Python'
+                        status = {pythonChecked ? 'checked' : 'unchecked'}
+                        onPress = {() => { onCheckBoxClick('Python', pythonChecked, setPythonChecked) }}
+                    />
+
+                    <Checkbox.Item
+                        label = 'Java Script'
+                        status = {jsChecked ? 'checked' : 'unchecked'}
+                        onPress = {() => { onCheckBoxClick('JavaScript', jsChecked, setJsChecked) }}
+                    />
+
+                    <Checkbox.Item
+                        label = 'Kotlin'
+                        status = {kotlinChecked ? 'checked' : 'unchecked'}
+                        onPress = {() => { onCheckBoxClick('Kotlin', kotlinChecked, setKotlinChecked) }}
+                    />
+                    
+                    <View style = {{...styles.dropDownView, ...styles.mvStyle}}>
+
+                        <Text style = {styles.textTitle}>Select Cast : </Text>
+
+                        <View style = {styles.pickerView}>
+                            <Picker
+                                selectedValue={cast}
+                                onValueChange={(itemValue, itemIndex) => setCast(itemValue)}
+                                style = {styles.picker}
+                                prompt = 'Options'
+                            >
+                                <Picker.Item label = 'General' value = 'General'/>
+                                <Picker.Item label = 'SEBC' value = 'SEBC'/>
+                                <Picker.Item label = 'SC' value = 'SC'/>
+                                <Picker.Item label = 'ST' value = 'ST'/>
+                                <Picker.Item label = 'PWD' value = 'PWD'/>
+                            </Picker>
+                        </View>
+            
+                    </View>
+
+                    <View style = {styles.mvStyle}>
+
+                        <View style = {styles.timePickerView}>
+                        
+                            <Text style = {styles.textTitle}>Select Time : </Text>
+
+                            <TouchableOpacity onPress = {() => setShow(true)}>
+                                <Text style = {styles.timeText}>{time}</Text>
+                                {show && (
+                                    <DateTimePicker
+                                    testID = 'dateTimePicker'
+                                    value = {date}
+                                    mode = {'time'}
+                                    is24Hour = {true}
+                                    display = 'default'
+                                    onChange = {onChangeTime}
+                                    />
+                                )}
+                            </TouchableOpacity>
+
+                        </View>
+
+                        {timeError ? <Text style = {styles.errorStyle}>{timeError}</Text> : null}
+
+                    </View>
+
+                    <View style = {styles.mvStyle}>
+                        <Button
+                            title = 'Submit'
+                            onPress = {submitForm}
+                            />
+                    </View>
+                    
+                    {/*
+                    <Text>FE : {firstNameError}, LE: {lastNameError}, EE : {emailError}, PE: {passwordError}, CPE : {confirmPasswordError}, GE: {genderError}, TE : {timeError}</Text>
+                    <Text>Email : {email}</Text>
+                    <Text>Password: {password}</Text>
+                    <Text>Mobile : {countryCode} {mobile}</Text>
+                    <Text>First Name : {firstName}</Text>
+                    <Text>Last Name : {lastName}</Text>
+                    <Text>Gemder : {gender}</Text>
+                    <Text>Preffered language : {selectedLanguages.join(', ')}</Text>
+                    <Text>Cast : {cast}</Text>*/}
+                    
+                </View>
             </NativeBaseProvider>
         </ScrollView>
     )
 }
 
 const styles = StyleSheet.create({
+
+    scrollContainer:{
+        flex: 1
+    },
+
     container: {
-        flex: 1,   
-        marginHorizontal: 30 
+        marginHorizontal: 30,
+        marginBottom: 10
+    },
+
+    mvStyle: {
+        marginVertical: 10
     },
 
     topView: {
         backgroundColor: '#009387',
         height: 200,
         flexDirection: 'row',
-    },
-
-    errorStyle: {
-        color: 'red',
-        fontSize: 16,
-        fontWeight: 'bold',
-        alignSelf: 'center'
     },
 
     topText: {
@@ -437,41 +491,35 @@ const styles = StyleSheet.create({
         fontWeight: 'bold'
     },
 
+    profile: {
+        width: 100, 
+        height: 100, 
+        resizeMode: 'stretch'
+    },
+
     nameView: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        flexDirection: 'row'
     },
 
     firstNameTextInput: {
-        marginRight: 5
+        flex: 1, 
+        marginRight: 10
     },
 
     lastNameTextInput: {
-        marginLeft: 5
+        flex: 1, 
+        marginLeft: 10
     },
 
-    textStyle: {
-        fontSize: TEXT_SIZE,
-        fontWeight: 'bold'
+    passwordNote: {
+        textAlign: 'justify',
+        color: 'green'
     },
 
     textTitle: {
         fontSize: TEXT_SIZE,
         fontWeight: 'bold',
-        color: '#222930'
-    },
-
-    textInput: {
-        flex: 1,
-        fontSize: TEXT_SIZE,
-        marginVertical: 10,
-        backgroundColor: '#b0b0b0',
-        borderRadius: 10,
-        paddingLeft : 10
-    },
-
-    genderViewContainer: {
-        marginVertical: 10,
+        color: 'black'
     },
 
     genderView: {
@@ -480,19 +528,39 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
-    dropDownView: {
-        marginVertical: 10,
-        flexDirection: 'row',
-        alignItems: 'center'
+    radioButtons:{ 
+        flexDirection: 'row', 
+        marginHorizontal: 16
     },
 
-    timePickerViewContainer:{
-        marginVertical: 10,
+    mobileView:{
+        flexDirection: 'row',
+        backgroundColor: '#b0b0b0',
+        borderRadius: 5,
+        borderWidth: 2,
+        borderColor: 'grey'
+    },
+
+    countryCodePicker: {
+        alignSelf: 'center',
+        borderTopLeftRadius: 10,
+        borderBottomLeftRadius: 10,
+        paddingHorizontal: 5,
+    },
+
+    dropDownView: {
+        flexDirection: 'row',
+        alignItems: 'center'
     },
 
     timePickerView: {
         flexDirection: 'row',
         alignItems: 'center'
+    },
+
+    timeText:{
+        color: 'blue', 
+        fontSize: 16
     },
 
     pickerView: {
@@ -506,17 +574,51 @@ const styles = StyleSheet.create({
 
     imagePickerView: {
         marginVertical: 20,
-        marginTop: 30,
-        alignItems: 'center',
-        
-    },
-
-    buttonView: {
-        marginVertical: 20,
+        alignItems: 'center',    
     },
 
     errorStyle: {
-        fontWeight: 'bold',
         color: 'red',
+    },
+
+    modalContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    modalTextView:{
+        marginVertical: '10%'
+    },
+
+    modalView: {
+        backgroundColor: "white",
+        borderRadius: 10,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowRadius: 4,
+        elevation: 5
+    },
+
+    modalButton: {
+        borderRadius: 10,
+        padding: 10,
+        elevation: 2,
+        width: 250,
+        backgroundColor: "#2196F3",
+    },
+
+    textStyle: {
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center"
+    },
+
+    modalText: {
+        textAlign: "center"
     }
 })

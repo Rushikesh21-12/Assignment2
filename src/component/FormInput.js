@@ -5,15 +5,17 @@ const TEXT_SIZE = 16
 
 export default function FormInput(props){
 
-  return (
-    <View>
+    return (
         <View style = {styles.container}>
+
             <Text style = {styles.labelStyle}>{props.label}</Text>
+
             <TextInput {...props} style = {styles.input} />
+            
             {props.errorName ? <Text style = {styles.errorStyle}>{props.errorName}</Text> : null}
+
         </View>
-    </View>
-  );
+    )
 };
 
 const styles = StyleSheet.create({
@@ -25,7 +27,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: TEXT_SIZE,
         backgroundColor: '#b0b0b0',
-        borderRadius: 10,
+        borderRadius: 5,
         paddingLeft : 10,
         borderColor: 'grey',
         borderWidth: 2
@@ -33,12 +35,12 @@ const styles = StyleSheet.create({
 
     labelStyle: {
         fontWeight: 'bold', 
-        marginLeft: 3
+        fontSize: 16,
+        color: 'black'
     },
 
     errorStyle: {
-        fontWeight: 'bold',
-        color: 'red',
+        color: 'red'
     }
 
 });

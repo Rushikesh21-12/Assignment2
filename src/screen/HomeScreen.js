@@ -1,5 +1,5 @@
-import React from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import React from 'react';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 
 export default function HomeScreen({navigation}){
     return(
@@ -33,21 +33,21 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#2b2b2a',
-        alignItems: "center"
+        alignItems: 'center'
     },
 
     header: {
         color: 'white',
         fontSize: 40,
         fontWeight: 'bold',
-        alignItems: "center",
+        alignItems: 'center',
         top: 70
     },
 
     buttonView: {
         flex: 1,
-        justifyContent: "center",
-        alignItems: "center"
+        justifyContent: 'center',
+        alignItems: 'center'
     },
 
     button: {
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
         borderColor: 'white',
         borderWidth: 1,
         width: 250,
-        alignItems: "center"
+        alignItems: 'center'
     },
 
     textStyle: {
