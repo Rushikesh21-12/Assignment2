@@ -25,9 +25,8 @@ const isValidMobile = (value) => {
 
 const isValidPassword = (value) => {
     if(value.match(/[a-z]/g) && value.match(/[A-Z]/g) && value.match(/[0-9]/g) 
-        && value.match(/[^a-zA-Z\d]/g) && value.length >= 8){
+        && value.match(/[^a-zA-Z\d]/g) && value.length >= 8)
             return true
-    }
     else return false
 }
 
@@ -77,68 +76,43 @@ export default function FormScreen({navigation}){
         setuserInfo({...userInfo, [fieldName]: value})
         switch(fieldName){
             case 'firstName':
-                if(value == '') 
-                    setError('Required Feild !')
-                else 
-                    setError('')
+                value == '' ? setError('Required Feild !') : setError('')
                 break
 
             case 'lastName':
-                if(value == '') 
-                    setError('Required Field !') 
-                else 
-                    setError('')
+                value == '' ? setError('Required Field !') : setError('')
                 break
 
             case 'email':
                 if(value == '') 
                     setError('Required field !')
-                else {
-                    if(!isValidEmail(value)) 
-                        setError('Invalid email !')
-                    else 
-                        setError('')  
-                }
+                else 
+                    !isValidEmail(value) ? setError('Invalid email !') : setError('')  
                 break
 
             case 'password':
                 if(value == '') 
                     setError('Required Field !')
-                else{
-                    if(isValidPassword(value)) 
-                        setError('') 
-                    else 
-                        setError('Password does not match with criteria !') 
-                }
+                else
+                    isValidPassword(value) ? setError('') : setError('Password does not match with criteria !') 
                 break
             
             case 'confirmPassword':
                 if(value == '') 
                     setError('Required Field !')
-                else{
-                    if(value !== password) 
-                        setError('Must be same as Password !')
-                    else 
-                        setError('')
-                }
+                else
+                    value !== password ? setError('Must be same as Password !') : setError('')
                 break
 
             case 'mobile':
                 if(value == '') 
                     setError('Required Field !')
-                 else{
-                    if(!isValidMobile(value)) 
-                        setError('Invalid Mobile No.')
-                    else 
-                        setError('') 
-                }
+                 else
+                    !isValidMobile(value) ? setError('Invalid Mobile No.') : setError('') 
                 break
 
             case 'gender':
-                if(value == '') 
-                    setError('Please Selece gender !')
-                else 
-                    setError('')
+                value == '' ? setError('Please Selece gender !') : setError('')
                 break
 
             default:
@@ -159,13 +133,10 @@ export default function FormScreen({navigation}){
         const currentDate = selectedDate || date;
             setDate(currentDate);
             setShow(Platform.OS === 'ios')
-    
+            
             setTime(currentDate.getHours() + ':' + currentDate.getMinutes() + ':' + currentDate.getSeconds())
 
-            if (time == 'Click here to select time')
-                setTimeError('Please select time !')
-            else
-                setTimeError('')         
+            setTimeError('')
     };
 
     const takePhotoFromCamera = () => {
@@ -175,8 +146,7 @@ export default function FormScreen({navigation}){
             height: 300,
             cropping: true,
         }).then(image => {
-            setImage(image.path)
-            
+            setImage(image.path)  
         });          
     }
 
@@ -192,8 +162,8 @@ export default function FormScreen({navigation}){
         
     }
 
-    const isValidForm = () => {
-        
+    const submitForm = () => {
+
         firstName == undefined ? setFirstNameError('Required Field !') : null
         lastName == undefined ? setLastNameError('Required Field !') : null
         email == undefined ? setEmailError('Required Field !') : null
@@ -202,12 +172,7 @@ export default function FormScreen({navigation}){
         mobile == undefined ? setMobileError('Required Field !') : null
         gender == undefined ? setGenderError('Please select gender !') : null
         time == 'Click here to select time' ? setTimeError('Please select time !') : null
-        
-        return
-    }
 
-    const submitForm = () => {
-        isValidForm()
         if(firstNameError == '' && lastNameError == '' && emailError == '' && passwordError == '' 
             && confirmPasswordError == '' && genderError == '' && timeError == '' ){
             setIsLoading(true);
@@ -432,10 +397,9 @@ export default function FormScreen({navigation}){
                             </TouchableOpacity>
 
                         </View>
-
                         {timeError ? <Text style = {styles.errorStyle}>{timeError}</Text> : null}
 
-                    </View>
+                    </View> 
 
                     <View style = {styles.mvStyle}>
                         <Button
